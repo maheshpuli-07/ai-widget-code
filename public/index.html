@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Widget Demo</title>
+    <link rel="stylesheet" href="/chat-widget.css" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.55;
+      }
+      code {
+        background: #f1f5f9;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      .status {
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+      }
+      .ok {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #15803d;
+      }
+      .error {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat Widget Dev Demo</h1>
+    <p>
+      Widget served from <strong>this dev server</strong> (<code>http://localhost:5174</code>).
+    </p>
+    <p>
+      To test with your Banking API, ensure:
+    </p>
+    <ul>
+      <li>
+        <strong>Chat API (default):</strong>
+        <code>https://ai-assistance-service.onrender.com</code> — CORS must allow this dev
+        origin if you use it from here.
+      </li>
+      <li><strong>Widget dev server</strong> on <code>http://localhost:5174</code> (this page)</li>
+    </ul>
+    <p>
+      The chat widget pill appears at <strong>bottom-center</strong>. Click it to send a message.
+    </p>
+
+    <script src="/chat-widget.js"></script>
+    <script>
+      if (typeof ChatWidgetEmbed === 'undefined') {
+        document.body.insertAdjacentHTML(
+          'beforeend',
+          '<div class="status error"><strong>Error:</strong> <code>ChatWidgetEmbed</code> did not load. Check browser console.</div>',
+        );
+      } else {
+        document.body.insertAdjacentHTML(
+          'beforeend',
+          '<div class="status ok"><strong>✓ Widget loaded successfully!</strong> Pill should appear below.</div>',
+        );
+        ChatWidgetEmbed.init({
+          apiBaseUrl: 'https://ai-assistance-service.onrender.com',
+          chatPath: '/api/v1/chat',
+          title: 'Support',
+          position: 'bottom-center',
+          launcherLabel: "I'm here to help — ask me anything!",
+        });
+      }
+    </script>
+  </body>
+</html>

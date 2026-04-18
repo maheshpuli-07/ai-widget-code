@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Partner site — embed example</title>
+    <link rel="stylesheet" href="/chat-widget.css" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        background: #f8fafc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Third-party website</h1>
+    <p>
+      For a real deploy, use the hashed filenames from <code>dist/</code> after <code>npm run build</code> (see <code>dist/index.html</code> copy-paste snippet). This example expects plain <code>chat-widget.js</code> next to this file (e.g. Vite dev only).
+    </p>
+    <script src="/chat-widget.js"></script>
+    <script>
+      ChatWidgetEmbed.init({
+        apiBaseUrl: 'https://ai-assistance-service.onrender.com',
+        title: 'Support',
+        chatPath: '/api/v1/chat',
+      });
+    </script>
+  </body>
+</html>
