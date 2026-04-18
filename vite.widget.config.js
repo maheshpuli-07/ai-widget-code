@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * IIFE bundle for third-party sites.
- * After build, `npm run build` runs scripts/patch-dist-for-netlify.mjs (adds index.html, demos, API from src/publicApiBase.js).
+ * After build, `npm run build` runs scripts/patch-dist.mjs (adds index.html, demos, API from src/publicApiBase.js).
  */
 export default defineConfig({
   publicDir: false,

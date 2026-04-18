@@ -17,10 +17,10 @@
  */
 var __ewExecutingLoaderScript = document.currentScript;
 (function () {
-  var DEFAULT_API_BASE = 'https://ai-assistance-service.onrender.com';
+  var DEFAULT_API_BASE = "https://ai-assistance-service.onrender.com";
   /** Replaced in dist by scripts/patch-dist.mjs (must match this line exactly). */
-  var CHAT_WIDGET_JS = 'chat-widget.js'; // ew-dist-hashed-js
-  var CHAT_WIDGET_CSS = 'chat-widget.css'; // ew-dist-hashed-css
+  var CHAT_WIDGET_JS = 'chat-widget.9d51947b9621.js'; // ew-dist-hashed-js
+  var CHAT_WIDGET_CSS = 'chat-widget.5e4ab6d2fed2.css'; // ew-dist-hashed-css
 
   function findLoaderScript() {
     var cur = __ewExecutingLoaderScript || document.currentScript;

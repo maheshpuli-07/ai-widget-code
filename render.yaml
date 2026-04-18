@@ -1,0 +1,7 @@
+# Render: Static Site — https://render.com/docs/static-sites
+# Dashboard → New → Static Site → connect this repo. Render reads this file if present.
+staticSites:
+  - name: chat-embed-widget
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    # Do not enable SPA "catch-all to index.html" for this site — it would serve HTML for *.js and break the widget.

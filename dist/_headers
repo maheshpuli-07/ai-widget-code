@@ -1,0 +1,14 @@
+/chat-widget.9d51947b9621.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/chat-widget.5e4ab6d2fed2.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/chat-widget.js
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/chat-widget.css
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/widget-loader.js
+  Cache-Control: no-store, no-cache, must-revalidate

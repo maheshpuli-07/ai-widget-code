@@ -2,7 +2,7 @@
 
 Standalone **React + Tailwind** IIFE bundle for third-party sites (`ChatWidgetEmbed.init(...)`).
 
-This repo lives **outside** `ai_banking_ui` so you can version and deploy it on its own (e.g. S3 + CloudFront).
+Deploy the built **`dist`** folder to any **static host** (S3 + CloudFront, Cloudflare Pages, a CDN bucket, your own Nginx, etc.).
 
 ### Reference architecture (product-help widget) vs this repo
 
@@ -15,28 +15,43 @@ This repo lives **outside** `ai_banking_ui` so you can version and deploy it on 
 | `data-access-token` | Sent as **`Authorization: Bearer …`** (optional). Safer: set **`window.__EW_CHAT_ACCESS_TOKEN__`** before the loader script so the token is not hard-coded in static HTML. |
 | `data-api-base` | **`apiBaseUrl`**. Omit attribute → default public API. `data-api-base=""` → same origin as the host page. |
 
-## Why Netlify showed “Page not found” before
+## Why the site root used to 404
 
-The widget build only produced `chat-widget.js` + `chat-widget.css`. Netlify serves `/` as **`index.html`**. With no `index.html` in the published folder, the **site root 404s**.
+The raw Vite widget build only produced `chat-widget.js` + `chat-widget.css`. Many hosts map `/` to **`index.html`**. With no `index.html` in the published folder, the **site root can 404**.
 
-**Fix:** `npm run build` runs a patch script that adds **`dist/index.html`**, **`demo-live.html`**, **`_headers`**, and **renames** the bundle to **content-hashed** `chat-widget.<hash>.js` / `chat-widget.<hash>.css` so caches cannot serve a stale wrong file for a fixed URL.
+**Fix:** `npm run build` runs **`scripts/patch-dist.mjs`**, which adds **`dist/index.html`**, **`demo-live.html`**, **`demo-loader.html`**, **`_headers`** (optional; see below), and **content-hashes** the bundle filenames so caches cannot serve a stale wrong file for a fixed URL.
 
-## Deploy on Netlify manually (browser, e.g. sign in with Google)
+## Deploy (static host)
 
-1. On your PC, in this folder: **`npm install`** then **`npm run build`**. That creates the **`dist`** folder (widget JS/CSS, **`widget-loader.js`**, **`index.html`** with copy buttons, demos, **`_headers`**).
-2. In your browser go to [Netlify](https://www.netlify.com/), sign up or log in (you can use **Continue with Google**).
-3. **Sites** → **Add new site** → **Deploy manually** (or drag-and-drop area).
-4. **Drag the entire `dist` folder** onto the deploy zone (not the repo root). Wait until the deploy finishes.
-5. Open your new site URL (for example **`https://random-name-123.netlify.app/`**). The home page **Copy loader snippet** uses **`location.origin`** and a **single `async` `<script>`** (no separate link/scripts). Omitting **`data-api-base`** uses the default API from **`src/publicApiBase.js`** (written into **`widget-loader.js`** at build time).
-6. Click **Copy loader snippet** or **Copy snippet**, then paste **before `</body>`** on any other site. Chat works only if that API allows **CORS** from that site’s origin (and from your Netlify domain for the demos).
+1. **`npm install`** then **`npm run build`**. That creates **`dist/`** (widget assets, **`widget-loader.js`**, landing **`index.html`**, demos, **`_headers`**).
+2. Upload the **entire `dist` folder** to your host (root of the bucket/site so `/index.html` and `/widget-loader.js` resolve).
+3. Open your deployed **`/`**. The page uses **`location.origin`** in the copy boxes so script URLs match your real CDN hostname.
+4. Paste the **Copy loader snippet** (or manual snippet) before **`</body>`** on partner sites. Your chat API must allow **CORS** from every origin that embeds the widget.
 
-**After each code change:** run **`npm run build`** again and upload the new **`dist`** (same manual flow, or connect Git later for auto deploy).
+**`_headers`:** Some static hosts read this file for cache headers; others ignore it — safe to leave in `dist/`.
+
+## Deploy on [Render](https://render.com) (static site)
+
+This project is **static files** after `npm run build` — use Render’s **Static Site** (not a Web Service unless you add your own server).
+
+1. In Render: **New +** → **Static Site**.
+2. Connect the GitHub repo (**`maheshpuli-07/ai-widget-code`** or your fork).
+3. Settings:
+   - **Branch:** `main`
+   - **Root directory:** leave empty (repo root).
+   - **Build command:** `npm ci && npm run build`
+   - **Publish directory:** `dist`
+4. **Create static site.** Wait for the first deploy.
+5. Open the Render URL (e.g. `https://chat-embed-widget.onrender.com/`). Use **Copy loader snippet** on `/` for embed tags pointing at **that** host.
+6. **Important:** Do **not** turn on a single-page-app rule that sends **all routes** to `index.html` — that can make `*.js` requests return HTML and break the widget. The repo includes `render.yaml` with `staticPublishPath: dist` only.
+
+If **`dist/` is committed** to Git, you can still keep the build command above so each deploy rebuilds from source (recommended). If you ever publish **without** rebuilding, ensure `dist/` matches the latest `src/`.
 
 ## Client demo checklist
 
-1. **`npm run build`** then deploy the whole **`dist`** folder to Netlify (see above).
-2. Open **`https://YOUR-SITE.netlify.app/demo-live.html`** — you should see the **chat pill** (proves JS/CSS deploy). Sending messages needs your API **up** on Render and **CORS** allowing your Netlify origin.
-3. Open **`/`** on the same site to copy embed code with the correct **hashed** asset names and your **live** Netlify origin.
+1. **`npm run build`**, deploy **`dist/`**.
+2. Open **`https://YOUR-CDN/demo-live.html`** — chat pill should appear (proves JS/CSS). Sending messages needs your API up and **CORS** allowing your CDN origin.
+3. Open **`/`** on the same host to copy snippets with the current **hashed** asset names.
 
 ## Develop
 
@@ -46,9 +61,9 @@ npm install
 npm run dev
 ```
 
-Preview: [http://localhost:5174](http://localhost:5174). `/api` and `/auth` proxy to the **Banking API**, default **`http://localhost:9000`** (override with `API_PROXY_TARGET` or `VITE_API_BASE_URL` in `.env`). CBA UAPI stays server-side; the widget only talks to the Banking API.
+Preview: [http://localhost:5174](http://localhost:5174). `/api` and `/auth` proxy to the **Banking API**, default **`http://localhost:9000`** (override with `API_PROXY_TARGET` or `VITE_API_BASE_URL` in `.env`).
 
-## Build (for Netlify Drop / any static host)
+## Build
 
 ```bash
 npm run build
@@ -59,25 +74,20 @@ npm run build
 - `index.html` — landing + copy-paste snippet (correct hashed asset URLs)
 - `demo-live.html` — smoke test
 - `chat-widget.<hash>.js` and `chat-widget.<hash>.css` — primary, immutable cache
-- `chat-widget.js` / `chat-widget.css` — copies with `no-store` for fixed-URL quick tests (e.g. local demos)
-- `_headers` — long cache for immutable hashed assets
+- `chat-widget.js` / `chat-widget.css` — copies with `no-store` for fixed-URL quick tests
+- `_headers` — optional cache hints for hosts that support them
 
 Do **not** upload the repo root or `src/` only.
 
-## Netlify
-
-- **Drag & drop:** drag **`dist`** onto [Netlify Drop](https://app.netlify.com/drop) or use **Deploy manually** in the dashboard (see **Deploy on Netlify manually** above).
-- **Git:** connect repo; `netlify.toml` sets `publish = "dist"` and `command = "npm run build"`.
-
 ## Production embed (recommended: one line)
 
-After deploy, use **Copy loader snippet** on **`/`**, or paste this shape (replace host and keys):
+After deploy, use **Copy loader snippet** on **`/`**, or:
 
 ```html
 <script
   id="ew-chat-widget-loader"
   async
-  src="https://YOUR-CLOUDFRONT-OR-NETLIFY-DOMAIN/widget-loader.js"
+  src="https://YOUR-CDN-DOMAIN/widget-loader.js"
   data-site-key="pk_xxx"
   data-client-id="client-id"
 ></script>
@@ -87,11 +97,11 @@ Optional: `data-api-base`, `data-chat-path`, `data-access-token`, or `window.__E
 
 ## Embed snippet (manual / advanced)
 
-After each `npm run build`, open your deployed **`index.html`** and use **Copy snippet** for hashed asset URLs. Example shape:
+After each `npm run build`, open your deployed **`index.html`** and use **Copy snippet**. Example shape:
 
 ```html
-<link rel="stylesheet" href="https://YOUR-SITE.netlify.app/chat-widget.0123456789ab.css" />
-<script src="https://YOUR-SITE.netlify.app/chat-widget.0123456789ab.js"></script>
+<link rel="stylesheet" href="https://YOUR-CDN/chat-widget.0123456789ab.css" />
+<script src="https://YOUR-CDN/chat-widget.0123456789ab.js"></script>
 <script>
   ChatWidgetEmbed.init({
     apiBaseUrl: 'https://ai-assistance-service.onrender.com',
@@ -101,7 +111,7 @@ After each `npm run build`, open your deployed **`index.html`** and use **Copy s
 </script>
 ```
 
-Prefer the **Copy snippet** button on your deployed **`/`** so `YOUR-SITE` and the **hash** match the current build. Change the API URL in **`src/publicApiBase.js`** if you use a different backend; your API must allow **CORS** from every origin that embeds the widget.
+Prefer the **Copy snippet** button on your deployed **`/`** so `YOUR-CDN` and the **hash** match the current build. Change the API URL in **`src/publicApiBase.js`** if you use a different backend; your API must allow **CORS** from every origin that embeds the widget.
 
 ## `init` options
 
@@ -127,7 +137,7 @@ Returns `{ destroy() }`.
 - **Safe init after load** (avoids race with other scripts):
 
 ```html
-<script src="https://YOUR-NETLIFY/chat-widget.YOUR_HASH.js"></script>
+<script src="https://YOUR-CDN/chat-widget.YOUR_HASH.js"></script>
 <script>
   window.addEventListener('load', function () {
     if (typeof ChatWidgetEmbed === 'undefined') {

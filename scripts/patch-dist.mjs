@@ -1,8 +1,8 @@
 /**
- * Netlify (and similar hosts) serve `/` as `index.html`.
+ * Most static hosts serve `/` as `index.html`.
  * Vite outputs chat-widget.js + chat-widget.css; this script renames them to content-hashed filenames
  * (avoids browsers/CDNs reusing a stale 304 body for a fixed /chat-widget.js URL).
- * This script adds a small landing page after `vite build`.
+ * Adds dist/index.html, demos, _headers (optional cache hints for hosts that honor them).
  */
 import crypto from 'node:crypto';
 import fs from 'fs';
@@ -17,7 +17,7 @@ const jsPath = path.join(dist, 'chat-widget.js');
 const cssPath = path.join(dist, 'chat-widget.css');
 if (!fs.existsSync(jsPath) || !fs.existsSync(cssPath)) {
   console.error(
-    '[patch-dist-for-netlify] Missing dist/chat-widget.js or dist/chat-widget.css. Run vite build (widget config) first.',
+    '[patch-dist] Missing dist/chat-widget.js or dist/chat-widget.css. Run vite build (widget config) first.',
   );
   process.exit(1);
 }
@@ -34,7 +34,7 @@ fs.renameSync(cssPath, path.join(dist, cssNamed));
 fs.copyFileSync(path.join(dist, jsNamed), path.join(dist, 'chat-widget.js'));
 fs.copyFileSync(path.join(dist, cssNamed), path.join(dist, 'chat-widget.css'));
 
-/** Landing page: auto-fills copy-paste with this Netlify origin so CDN is never wrong. */
+/** Landing page: copy-paste uses this deploy origin (<code>location.origin</code>). */
 const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,7 +52,7 @@ const indexHtml = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <p class="ok">Deploy this entire <code>dist</code> folder to Netlify — <code>index.html</code> is in the root.</p>
+  <p class="ok">Upload this entire <code>dist</code> folder to your static host — keep <code>index.html</code> at the site root.</p>
   <h1>Chat embed widget</h1>
 
   <div class="warn">
@@ -67,7 +67,7 @@ const indexHtml = `<!DOCTYPE html>
     <li><a href="./chat-widget.js"><code>chat-widget.js</code></a> / <a href="./chat-widget.css"><code>chat-widget.css</code></a> (<code>no-store</code>)</li>
     <li><a href="./widget-loader.js"><code>widget-loader.js</code></a> — <strong>one tag</strong> for third-party sites (loads CSS + JS + <code>init</code>)</li>
   </ul>
-  <p><strong>Prove deploy:</strong> open <a href="./demo-live.html"><code>demo-live.html</code></a> or <a href="./demo-loader.html"><code>demo-loader.html</code></a> — you should see the chat pill.</p>
+  <p><strong>Smoke test:</strong> open <a href="./demo-live.html"><code>demo-live.html</code></a> or <a href="./demo-loader.html"><code>demo-loader.html</code></a> — you should see the chat pill.</p>
 
   <h2>Third-party sites: one <code>&lt;script&gt;</code> (recommended)</h2>
   <p>Paste anywhere (end of <code>&lt;body&gt;</code> is ideal). This snippet uses <strong>this site’s origin</strong> for the loader, <code>async</code>, and omits <code>data-api-base</code> so chat uses the default API (<code>${PUBLIC_WIDGET_API_BASE}</code>). Add <code>data-api-base=""</code> only for same-origin APIs; set <code>data-api-base="https://…"</code> to override.</p>
@@ -145,11 +145,11 @@ const demoLiveHtml = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <p class="ok">If Netlify deployed correctly, an Alloe-style chat pill appears (bottom-center).</p>
+  <p class="ok">If this deploy is correct, an Alloe-style chat pill appears (bottom-center).</p>
   <p>The script uses a <strong>content-hashed filename</strong> (e.g. <code>/chat-widget.${assetHash}.js</code>) so caches cannot replay an old wrong body for a fixed <code>/chat-widget.js</code> URL. It is parser-inserted like production embeds.</p>
   <p>Paths are <strong>root-absolute</strong>. Unregister any <strong>service worker</strong> for this site if the script body is wrong.</p>
   <div id="ew-status">Loading widget script…</div>
-  <p>Sending messages needs your Banking API at <code>apiBaseUrl</code> (and CORS).</p>
+  <p>Sending messages needs your chat API at <code>apiBaseUrl</code> (and CORS).</p>
   <script src="/${jsNamed}"></script>
   <script>
   (function () {
@@ -213,8 +213,8 @@ const demoLoaderHtml = `<!DOCTYPE html>
 </head>
 <body>
   <p class="ok">Production-style: one <code>async</code> tag, no <code>data-api-base</code> (default API injected at build from <code>src/publicApiBase.js</code>).</p>
-  <p>Override with <code>data-api-base="https://…"</code> if needed; CORS must allow this Netlify origin.</p>
-  <script id="ew-chat-widget-loader" async src="/widget-loader.js" data-site-key="netlify-demo" data-client-id=""></script>
+  <p>Override with <code>data-api-base="https://…"</code> if needed; CORS must allow this widget host origin.</p>
+  <script id="ew-chat-widget-loader" async src="/widget-loader.js" data-site-key="embed-demo" data-client-id=""></script>
 </body>
 </html>
 `;
@@ -230,7 +230,7 @@ fs.writeFileSync(path.join(dist, 'demo-loader.html'), demoLoaderHtml, 'utf8');
 const loaderSrc = path.join(__dirname, '..', 'public', 'widget-loader.js');
 const loaderDest = path.join(dist, 'widget-loader.js');
 if (!fs.existsSync(loaderSrc)) {
-  console.error(`[patch-dist-for-netlify] Missing ${loaderSrc}`);
+  console.error(`[patch-dist] Missing ${loaderSrc}`);
   process.exit(1);
 }
 let loaderJs = fs.readFileSync(loaderSrc, 'utf8');
@@ -271,5 +271,5 @@ const redirectsPath = path.join(dist, '_redirects');
 if (fs.existsSync(redirectsPath)) fs.unlinkSync(redirectsPath);
 
 console.log(
-  `[patch-dist-for-netlify] wrote index.html, demo-live.html, demo-loader.html, widget-loader.js, _headers (${jsNamed}, ${cssNamed}; removed _redirects if present)`,
+  `[patch-dist] wrote index.html, demo-live.html, demo-loader.html, widget-loader.js, _headers (${jsNamed}, ${cssNamed}; removed _redirects if present)`,
 );
