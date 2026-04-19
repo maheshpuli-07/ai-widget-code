@@ -54,7 +54,7 @@ const apiKey = import.meta.env.VITE_GENERAL_API_KEY?.trim() || '';
 
 init({
   apiBaseUrl,
-  title: 'Banking assistant',
+  title: 'Girmitian AI',
   chatPath: '/api/v1/chat',
   ...(tenantId ? { tenantId } : {}),
   ...(embedKey ? { embedKey } : {}),
