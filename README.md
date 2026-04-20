@@ -126,6 +126,8 @@ Prefer the **Copy snippet** button on your deployed **`/`** so `YOUR-CDN` and th
 | `tenantId`, `embedKey` | Sent as `X-Tenant-Id` / `X-Embed-Key` when set. |
 | `extraHeaders` | Additional headers. |
 | `title`, `placeholder`, `position`, `zIndex`, `defaultOpen`, `containerId` | UI / mount. |
+| `replyFormatPrompt` | Optional `systemPrompt` text on each POST (default: formatting instructions). Set `false` or `''` to disable that and the message suffix. |
+| `replyFormatAppendToMessage` | Default `true`: appends a short format hint to the JSON `message` so the model still sees rules when the gateway ignores `systemPrompt`. Set `false` if you only want the system field. |
 
 Returns `{ destroy() }`.
 

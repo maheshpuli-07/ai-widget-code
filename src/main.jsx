@@ -1,7 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { init } from './embed.jsx';
-import { PUBLIC_WIDGET_API_BASE } from './publicApiBase.js';
+import { resolveWidgetApiBase } from './publicApiBase.js';
+import {
+  WIDGET_DEFAULT_PLACEHOLDER,
+  WIDGET_DEFAULT_TITLE,
+} from './widgetDefaults.js';
 
 function HostPreview() {
   return (
@@ -37,27 +41,33 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>
 );
 
-/**
- * Default: Render public API (`src/publicApiBase.js`). Set `VITE_DEV_WIDGET_API_BASE=` (empty) in
- * `.env` for same-origin `/api` when you add a dev proxy; set a full URL to override.
- */
-const rawWidgetApi = import.meta.env.VITE_DEV_WIDGET_API_BASE;
-const apiBaseUrl =
-  rawWidgetApi === undefined || rawWidgetApi === null
-    ? PUBLIC_WIDGET_API_BASE
-    : String(rawWidgetApi).trim();
+/** Chat API: `.env` → `VITE_WIDGET_API_BASE`; dev server defaults in `src/publicApiBase.js`. */
+const apiBaseUrl = resolveWidgetApiBase();
 
 const tenantId = import.meta.env.VITE_TENANT_ID?.trim();
 const embedKey = import.meta.env.VITE_EMBED_KEY?.trim();
 const accessToken = import.meta.env.VITE_ACCESS_TOKEN?.trim() || '';
 const apiKey = import.meta.env.VITE_GENERAL_API_KEY?.trim() || '';
+const clientId = import.meta.env.VITE_CLIENT_ID?.trim();
+const clientIp = import.meta.env.VITE_CLIENT_IP?.trim();
+/** Set to '' to hide the callback card in dev. Default shows the form; POST may 404 until your API implements the route. */
+const contactLeadPath =
+  import.meta.env.VITE_CONTACT_LEAD_PATH !== undefined
+    ? String(import.meta.env.VITE_CONTACT_LEAD_PATH).trim()
+    : '/api/v1/contact-lead';
 
 init({
   apiBaseUrl,
-  title: 'Girmitian AI',
+  title: WIDGET_DEFAULT_TITLE,
+  placeholder: WIDGET_DEFAULT_PLACEHOLDER,
   chatPath: '/api/v1/chat',
+  /** Local dev: drag the closed launcher to reposition (saved in localStorage). Set `false` to match production embeds. */
+  draggableLauncher: true,
+  ...(contactLeadPath ? { contactLeadPath } : {}),
   ...(tenantId ? { tenantId } : {}),
   ...(embedKey ? { embedKey } : {}),
   ...(accessToken ? { accessToken } : {}),
   ...(apiKey ? { apiKey } : {}),
+  ...(clientId ? { clientId } : {}),
+  ...(clientIp ? { clientIp } : {}),
 });

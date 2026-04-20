@@ -9,9 +9,17 @@
  * Attributes:
  *   data-api-base       — API origin; omit for default public API
  *   data-chat-path      — default /api/v1/chat
- *   data-site-key       — X-Embed-Key
- *   data-client-id      — X-Tenant-Id
- *   data-access-token   — Bearer (optional; prefer window.__EW_CHAT_ACCESS_TOKEN__)
+ *   data-site-key         — X-Embed-Key
+ *   data-client-id        — X-Tenant-Id
+ *   data-body-client-id   — JSON body clientId (optional; separate from tenant header)
+ *   data-client-ip        — JSON body clientIp (optional; or window.__EW_CLIENT_IP__)
+ *   data-api-key          — apiKey in header + JSON body (avoid in static HTML if secret)
+ *   data-contact-lead-path — e.g. /api/v1/contact-lead (callback form; server sends email)
+ *   data-access-token     — Bearer (optional; prefer window.__EW_CHAT_ACCESS_TOKEN__)
+ *   data-title          — panel header title (default Girmitian AI)
+ *   data-placeholder    — message input placeholder (default Ask Girmiti AI…)
+ *   data-draggable-launcher — set to "true" to allow dragging the closed chat pill/icon on the page
+ *   data-remember-launcher-position — set to "true" with draggable to persist launcher coordinates in localStorage across reloads
  *
  * CHAT_WIDGET_JS / CHAT_WIDGET_CSS: stable names in repo; npm run build rewrites them to hashed names in dist.
  */
@@ -60,8 +68,23 @@ var __ewExecutingLoaderScript = document.currentScript;
 
     var chatPath = loader.getAttribute('data-chat-path') || '/api/v1/chat';
     var siteKey = loader.getAttribute('data-site-key') || '';
-    var clientId = loader.getAttribute('data-client-id') || '';
+    var tenantIdAttr = loader.getAttribute('data-client-id') || '';
+    var bodyClientId = (loader.getAttribute('data-body-client-id') || '').trim();
+    var clientIpAttr = (loader.getAttribute('data-client-ip') || '').trim();
+    var apiKeyAttr = (loader.getAttribute('data-api-key') || '').trim();
+    var contactLeadPath = (loader.getAttribute('data-contact-lead-path') || '').trim();
     var accessToken = (loader.getAttribute('data-access-token') || '').trim();
+    if (
+      !clientIpAttr &&
+      typeof window !== 'undefined' &&
+      typeof window.__EW_CLIENT_IP__ === 'string'
+    ) {
+      clientIpAttr = window.__EW_CLIENT_IP__.trim();
+    }
+    var titleAttr = (loader.getAttribute('data-title') || '').trim();
+    var placeholderAttr = (loader.getAttribute('data-placeholder') || '').trim();
+    var draggableLauncherAttr = (loader.getAttribute('data-draggable-launcher') || '').trim().toLowerCase();
+    var rememberLauncherAttr = (loader.getAttribute('data-remember-launcher-position') || '').trim().toLowerCase();
     if (
       !accessToken &&
       typeof window !== 'undefined' &&
@@ -95,12 +118,23 @@ var __ewExecutingLoaderScript = document.currentScript;
         apiBaseUrl: apiBase,
         chatPath: chatPath,
         embedKey: siteKey,
-        tenantId: clientId,
-        title: 'Support',
+        tenantId: tenantIdAttr,
+        title: titleAttr || 'Girmitian AI',
+        placeholder: placeholderAttr || 'Ask Girmiti AI…',
         position: 'bottom-center',
         launcherLabel: "I'm here to help — ask me anything!",
       };
       if (accessToken) initCfg.accessToken = accessToken;
+      if (bodyClientId) initCfg.clientId = bodyClientId;
+      if (clientIpAttr) initCfg.clientIp = clientIpAttr;
+      if (apiKeyAttr) initCfg.apiKey = apiKeyAttr;
+      if (contactLeadPath) initCfg.contactLeadPath = contactLeadPath;
+      if (draggableLauncherAttr === 'true' || draggableLauncherAttr === '1' || draggableLauncherAttr === 'yes') {
+        initCfg.draggableLauncher = true;
+      }
+      if (rememberLauncherAttr === 'true' || rememberLauncherAttr === '1' || rememberLauncherAttr === 'yes') {
+        initCfg.rememberLauncherPosition = true;
+      }
       ChatWidgetEmbed.init(initCfg);
       window.__EW_WIDGET_LOADER_DONE__ = true;
     } catch (err) {

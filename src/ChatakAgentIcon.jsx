@@ -89,16 +89,16 @@ export function AgenticFabGlyph({ className }) {
     <span
       className={cn(
         'ew-relative ew-flex ew-h-full ew-w-full ew-min-h-0 ew-min-w-0 ew-items-center ew-justify-center ew-overflow-visible',
-        'ew-[transform-style:preserve-3d] ew-will-change-transform',
+        'ew-[transform-style:preserve-3d] ew-[backface-visibility:hidden]',
         'motion-safe:ew-animate-agent-fab-3d motion-reduce:ew-animate-none',
         className,
       )}
       aria-hidden
     >
-      <span className="ew-agent-wander ew-relative ew-flex ew-h-full ew-w-full ew-items-center ew-justify-center">
-        <AssistantGlyph className="ew-relative ew-z-[1] ew-h-8 ew-w-8 sm:ew-h-10 sm:ew-w-10 ew-text-primary ew-drop-shadow-[0_2px_3px_rgba(0,0,0,0.18)] motion-reduce:ew-drop-shadow-none" />
+      <span className="ew-agent-wander ew-relative ew-flex ew-h-full ew-w-full ew-items-center ew-justify-center ew-[backface-visibility:hidden]">
+        <AssistantGlyph className="ew-relative ew-z-[1] ew-h-8 ew-w-8 sm:ew-h-10 sm:ew-w-10 ew-text-primary" />
         <Sparkles
-          className="ew-absolute -ew-right-0.5 -ew-top-0.5 ew-z-[2] ew-h-3.5 ew-w-3.5 sm:ew-h-4 sm:ew-w-4 ew-text-amber-500 ew-drop-shadow-[0_1px_2px_rgba(180,83,9,0.35)]"
+          className="ew-absolute -ew-right-0.5 -ew-top-0.5 ew-z-[2] ew-h-3.5 ew-w-3.5 sm:ew-h-4 sm:ew-w-4 ew-text-amber-500"
           strokeWidth={2.35}
         />
       </span>

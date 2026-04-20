@@ -21,9 +21,11 @@
     <script src="/chat-widget.js"></script>
     <script>
       ChatWidgetEmbed.init({
-        apiBaseUrl: 'https://ai-assistance-service.onrender.com',
-        title: 'Support',
+        apiBaseUrl: 'http://localhost:3090',
+        title: 'Girmitian AI',
+        placeholder: 'Ask Girmiti AI…',
         chatPath: '/api/v1/chat',
+        draggableLauncher: true,
       });
     </script>
   </body>

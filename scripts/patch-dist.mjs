@@ -9,6 +9,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PUBLIC_WIDGET_API_BASE } from '../src/publicApiBase.js';
+import {
+  WIDGET_DEFAULT_PLACEHOLDER,
+  WIDGET_DEFAULT_TITLE,
+} from '../src/widgetDefaults.js';
+
+const TITLE_JSON = JSON.stringify(WIDGET_DEFAULT_TITLE);
+const PLACEHOLDER_JSON = JSON.stringify(WIDGET_DEFAULT_PLACEHOLDER);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(__dirname, '..', 'dist');
@@ -93,7 +100,8 @@ const indexHtml = `<!DOCTYPE html>
       "    apiBaseUrl: '${PUBLIC_WIDGET_API_BASE}'," + nl +
       "    accessToken: ''," + nl +
       "    chatPath: '/api/v1/chat'," + nl +
-      "    title: 'Assistant'," + nl +
+      '    title: ' + ${TITLE_JSON} + ',' + nl +
+      '    placeholder: ' + ${PLACEHOLDER_JSON} + ',' + nl +
       "    position: 'bottom-left'," + nl +
       '  });' + nl +
       '<\\/script>';
@@ -183,7 +191,8 @@ const demoLiveHtml = `<!DOCTYPE html>
       api.init({
         apiBaseUrl: '${PUBLIC_WIDGET_API_BASE}',
         chatPath: '/api/v1/chat',
-        title: 'Demo',
+        title: ${TITLE_JSON},
+        placeholder: ${PLACEHOLDER_JSON},
         position: 'bottom-center',
         launcherLabel: "I'm here to help — ask me anything!",
       });

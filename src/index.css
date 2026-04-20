@@ -10,7 +10,7 @@
   perspective: 110px;
 }
 
-/* Gentle drift inside the orb / FAB circle (pairs with agent-fab-3d on FAB). */
+/* Drift animation for header orb and FAB launcher (`ew-agent-wander`). */
 @media (prefers-reduced-motion: no-preference) {
   #ew-chat-widget-portal .ew-agent-wander,
   #ew-chat-widget-root .ew-agent-wander {

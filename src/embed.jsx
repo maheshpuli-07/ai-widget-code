@@ -17,7 +17,10 @@ let weCreatedMount = false;
  * @param {string} [config.embedKey]
  * @param {string} [config.accessToken] - Bearer token → `Authorization` (optional). Loader: `data-access-token` or `window.__EW_CHAT_ACCESS_TOKEN__`.
  * @param {() => string|undefined|null} [config.getAccessToken] - per-request token
- * @param {string} [config.apiKey] - X-API-Key only if your gateway requires it
+ * @param {string} [config.apiKey] - `X-API-Key` header and JSON `apiKey` when set
+ * @param {string} [config.clientId] - JSON body `clientId` (optional; separate from `tenantId` → `X-Tenant-Id`)
+ * @param {string} [config.clientIp] - JSON body `clientIp` (usually injected server-side; browser has no true public IP)
+ * @param {() => string|undefined|null|Promise<string|undefined|null>} [config.getClientIp] - optional override for `clientIp` each send
  * @param {object} [config.secureFields] - phoneNumber, customerId, accountNumber, transactionTrackingRef
  * @param {string} [config.title]
  * @param {string} [config.placeholder]
@@ -28,6 +31,16 @@ let weCreatedMount = false;
  * @param {string} [config.containerId=ew-chat-widget-root] - existing element to mount into
  * @param {boolean} [config.removeContainerOnDestroy=true] - if we created the container, remove on destroy
  * @param {Record<string, string>} [config.extraHeaders]
+ * @param {string|false} [config.replyFormatPrompt] - sent as JSON `systemPrompt` when non-empty; `false`/`''` omits. Default instructions ask for paragraphs and "- " bullets.
+ * @param {boolean} [config.replyFormatAppendToMessage=true] - append a short format hint after the user message in JSON (for APIs that ignore `systemPrompt`). Set `false` to send only `systemPrompt`.
+ * @param {boolean} [config.persistChatSession=true] - send `sessionId` + `conversationId` (after first reply) on each POST; persist in localStorage. Set `false` to omit (no anonymous threading).
+ * @param {boolean} [config.draggableLauncher=false] - when `true`, the closed chat launcher can be dragged on the page. Default `false` keeps the fixed `position` corner/center anchor.
+ * @param {boolean} [config.rememberLauncherPosition=false] - when `true` (with `draggableLauncher`), restore/save dragged launcher coordinates in localStorage (scoped like the chat session). Default `false`: each load uses `position` (e.g. bottom-right); drag applies until reload.
+ * @param {string} [config.contactLeadPath] - e.g. `/api/v1/contact-lead`; when set, the callback row (**Send** = POST `sendContactLead`) **appears and expands** only when the **user** message looks like a **name, email, or phone** in chat (prefill). **Skip** or a successful **Send** removes the row from the panel; it can appear again on a later message with a new hint.
+ * @param {string} [config.contactCardTitle]
+ * @param {string} [config.contactCardSubtitle]
+ * @param {string} [config.contactCardButtonLabel]
+ * @param {number} [config.contactCardMaxSummaryChars=12000] - max chars of chat transcript in `chatSummary` body field
  * @returns {{ destroy: () => void }}
  */
 function mountWidget(config) {
