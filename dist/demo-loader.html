@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Widget loader check</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1.5rem; max-width: 36rem; margin: 0 auto; line-height: 1.5; }
+    .ok { color: #15803d; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <p class="ok">Production-style: one <code>async</code> tag, no <code>data-api-base</code> (default API injected at build from <code>src/publicApiBase.js</code>).</p>
+  <p>Override with <code>data-api-base="https://…"</code> if needed; CORS must allow this widget host origin.</p>
+  <script id="ew-chat-widget-loader" async src="/widget-loader.js" data-site-key="embed-demo" data-client-id=""></script>
+</body>
+</html>
