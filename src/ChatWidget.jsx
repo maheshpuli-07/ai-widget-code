@@ -35,6 +35,8 @@ const PORTAL_ID = 'ew-chat-widget-portal';
 /** Max FAB footprint used when measuring is unavailable (pill is clamped on resize). */
 const LAUNCHER_CLAMP_W = 320;
 const LAUNCHER_CLAMP_H = 88;
+/** Upper bound for open panel width; must stay in sync with `ew-w-[min(100vw-1.25rem,400px)]`. */
+const PANEL_MAX_W_PX = 400;
 
 function launcherPosStorageKey(scopeKey) {
   return `ew_launcher_pos_v1|${scopeKey}`;
@@ -262,6 +264,7 @@ export default function ChatWidget({ config: userConfig }) {
     replyFormatAppendToMessage,
     persistChatSession,
     draggableLauncher,
+    draggablePanel,
     rememberLauncherPosition,
     contactLeadPath,
     contactCardTitle,
@@ -269,6 +272,9 @@ export default function ChatWidget({ config: userConfig }) {
     contactCardButtonLabel,
     contactCardMaxSummaryChars,
   } = config;
+
+  /** Drag the open panel by its header; `undefined` → follow `draggableLauncher`. */
+  const panelHeaderDragEnabled = draggablePanel ?? draggableLauncher;
 
   const sessionPersistenceKey = useMemo(
     () =>
@@ -409,6 +415,16 @@ export default function ChatWidget({ config: userConfig }) {
     return () => window.removeEventListener('resize', onResize);
   }, [draggableLauncher]);
 
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1280,
+  );
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const formatExtrasEnabled =
     replyFormatPrompt !== false && replyFormatPrompt !== '';
 
@@ -438,11 +454,87 @@ export default function ChatWidget({ config: userConfig }) {
   const [contactCardRevealed, setContactCardRevealed] = useState(false);
   /** Pixel translate applied to the open panel so it stays on-screen (drag near top / narrow viewports). */
   const [panelViewportNudge, setPanelViewportNudge] = useState({ x: 0, y: 0 });
+  /** User drag offset for the open panel (header drag); combined with `panelViewportNudge` for final transform. */
+  const [panelUserDragPx, setPanelUserDragPx] = useState({ x: 0, y: 0 });
+  const panelUserDragPxRef = useRef({ x: 0, y: 0 });
   const listRef = useRef(null);
   /** Outer non-maximized panel shell — used to keep the dialog inside the viewport when the launcher is near an edge. */
   const panelOuterRef = useRef(null);
+  const panelHeaderDragRef = useRef({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    origDx: 0,
+    origDy: 0,
+    dragged: false,
+  });
+  /** True while the user is actively dragging the chat header — skips auto viewport nudge so it does not fight the pointer. */
+  const panelHeaderDraggingRef = useRef(false);
   const inputRef = useRef(null);
   const prevLoadingRef = useRef(false);
+
+  useEffect(() => {
+    panelUserDragPxRef.current = panelUserDragPx;
+  }, [panelUserDragPx]);
+
+  const onPanelHeaderPointerDown = useCallback(
+    (e) => {
+      if (!panelHeaderDragEnabled || panelMaximized || e.button !== 0) return;
+      if (e.target.closest('button')) return;
+      const el = e.currentTarget;
+      panelHeaderDragRef.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origDx: panelUserDragPxRef.current.x,
+        origDy: panelUserDragPxRef.current.y,
+        dragged: false,
+      };
+      el.setPointerCapture(e.pointerId);
+    },
+    [panelHeaderDragEnabled, panelMaximized],
+  );
+
+  const onPanelHeaderPointerMove = useCallback(
+    (e) => {
+      if (!panelHeaderDragEnabled || panelMaximized) return;
+      if (panelHeaderDragRef.current.pointerId !== e.pointerId) return;
+      const d = panelHeaderDragRef.current;
+      const dx = e.clientX - d.startX;
+      const dy = e.clientY - d.startY;
+      if (!d.dragged && Math.hypot(dx, dy) > 8) {
+        d.dragged = true;
+        panelHeaderDraggingRef.current = true;
+      }
+      if (!d.dragged) return;
+      setPanelUserDragPx({
+        x: d.origDx + dx,
+        y: d.origDy + dy,
+      });
+    },
+    [panelHeaderDragEnabled, panelMaximized],
+  );
+
+  const finishPanelHeaderPointer = useCallback((e) => {
+    if (panelHeaderDragRef.current.pointerId !== e.pointerId) return;
+    panelHeaderDragRef.current = {
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      origDx: 0,
+      origDy: 0,
+      dragged: false,
+    };
+    const el = e.currentTarget;
+    try {
+      if (el.hasPointerCapture?.(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      /* ignore */
+    }
+    panelHeaderDraggingRef.current = false;
+  }, []);
 
   const contactLeadEnabled = Boolean(String(contactLeadPath ?? '').trim());
 
@@ -462,6 +554,14 @@ export default function ChatWidget({ config: userConfig }) {
     if (!open) setPanelMaximized(false);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) setPanelUserDragPx({ x: 0, y: 0 });
+  }, [open]);
+
+  useEffect(() => {
+    if (panelMaximized) setPanelUserDragPx({ x: 0, y: 0 });
+  }, [panelMaximized]);
+
   /** After send completes, return focus to the input so the user can type the next message. */
   useEffect(() => {
     if (!open) {
@@ -480,13 +580,25 @@ export default function ChatWidget({ config: userConfig }) {
       setPanelViewportNudge({ x: 0, y: 0 });
       return;
     }
+    if (panelHeaderDraggingRef.current) return;
+
     const margin = 12;
     const measure = () => {
       const el = panelOuterRef.current;
       if (!el || typeof window === 'undefined') return;
       const vh = window.innerHeight;
       const vw = window.innerWidth;
+      /**
+       * Measure with viewport nudge cleared but user header-drag offset kept — otherwise nudge is wrong
+       * after Send, and `translate(0,0)` would ignore an in-progress panel drag offset.
+       */
+      const prevTransform = el.style.transform;
+      const d = panelUserDragPxRef.current;
+      el.style.transform = `translate(${d.x}px, ${d.y}px)`;
+      void el.offsetHeight;
       const r = el.getBoundingClientRect();
+      el.style.transform = prevTransform;
+
       let dx = 0;
       let dy = 0;
       if (r.top < margin) dy += margin - r.top;
@@ -515,6 +627,9 @@ export default function ChatWidget({ config: userConfig }) {
     loading,
     contactExpanded,
     contactCardRevealed,
+    viewportWidth,
+    panelUserDragPx.x,
+    panelUserDragPx.y,
   ]);
 
   const submit = useCallback(async () => {
@@ -712,34 +827,56 @@ export default function ChatWidget({ config: userConfig }) {
   ]);
 
   const dockBottom = open ? 36 : 14;
-  const dockStyle =
-    position === 'bottom-left'
-      ? { left: 14, bottom: dockBottom, alignItems: 'flex-start' }
-      : position === 'bottom-center'
-        ? {
-            left: '50%',
-            bottom: dockBottom,
-            transform: 'translateX(-50%)',
-            alignItems: 'center',
-          }
-        : { right: 14, bottom: dockBottom, alignItems: 'flex-end' };
 
-  const dockStyleResolved =
-    draggableLauncher && launcherDockPx != null
-      ? {
-          left: launcherDockPx.left,
-          bottom: launcherDockPx.bottom,
-          right: 'auto',
-          top: 'auto',
-          transform: 'none',
-          alignItems:
-            position === 'bottom-left'
-              ? 'flex-start'
-              : position === 'bottom-center'
-                ? 'center'
-                : 'flex-end',
-        }
-      : dockStyle;
+  const dockStyleResolved = useMemo(() => {
+    if (draggableLauncher && launcherDockPx != null) {
+      const rawLeft = launcherDockPx.left;
+      const vw = viewportWidth;
+      const margin = 12;
+      let left = rawLeft;
+      if (open && Number.isFinite(vw) && vw > 0) {
+        const rem125 =
+          typeof document !== 'undefined'
+            ? parseFloat(getComputedStyle(document.documentElement).fontSize || '16') * 1.25
+            : 20;
+        const panelW = Math.min(PANEL_MAX_W_PX, Math.max(margin * 2, vw - rem125));
+        const maxLeft = vw - panelW - margin;
+        left = Math.max(margin, Math.min(rawLeft, Math.max(margin, maxLeft)));
+      }
+      return {
+        left,
+        bottom: launcherDockPx.bottom,
+        right: 'auto',
+        top: 'auto',
+        transform: 'none',
+        alignItems:
+          position === 'bottom-left'
+            ? 'flex-start'
+            : position === 'bottom-center'
+              ? 'center'
+              : 'flex-end',
+      };
+    }
+    if (position === 'bottom-left') {
+      return { left: 14, bottom: dockBottom, alignItems: 'flex-start' };
+    }
+    if (position === 'bottom-center') {
+      return {
+        left: '50%',
+        bottom: dockBottom,
+        transform: 'translateX(-50%)',
+        alignItems: 'center',
+      };
+    }
+    return { right: 14, bottom: dockBottom, alignItems: 'flex-end' };
+  }, [
+    draggableLauncher,
+    launcherDockPx,
+    open,
+    position,
+    dockBottom,
+    viewportWidth,
+  ]);
 
   const launcherPointerProps = draggableLauncher
     ? {
@@ -818,11 +955,15 @@ export default function ChatWidget({ config: userConfig }) {
                     maxHeight: '95vh',
                     zIndex: zIndex + 2,
                   }
-                : panelViewportNudge.x || panelViewportNudge.y
-                  ? {
-                      transform: `translate(${panelViewportNudge.x}px, ${panelViewportNudge.y}px)`,
-                    }
-                  : undefined
+                : (() => {
+                    const tx =
+                      panelViewportNudge.x + panelUserDragPx.x;
+                    const ty =
+                      panelViewportNudge.y + panelUserDragPx.y;
+                    return tx || ty
+                      ? { transform: `translate(${tx}px, ${ty}px)` }
+                      : undefined;
+                  })()
             }
           >
             <div
@@ -836,7 +977,18 @@ export default function ChatWidget({ config: userConfig }) {
               aria-label={title}
             >
             <div className="ew-flex ew-min-h-0 ew-flex-1 ew-flex-col ew-overflow-hidden ew-rounded-2xl">
-            <div className="ew-flex ew-shrink-0 ew-items-center ew-justify-between ew-border-b ew-border-white/10 ew-bg-[#1a1a1a] ew-px-3 ew-py-1.5">
+            <div
+              className={cn(
+                'ew-flex ew-shrink-0 ew-items-center ew-justify-between ew-border-b ew-border-white/10 ew-bg-[#1a1a1a] ew-px-3 ew-py-1.5',
+                panelHeaderDragEnabled &&
+                  !panelMaximized &&
+                  'ew-cursor-grab ew-select-none active:ew-cursor-grabbing',
+              )}
+              onPointerDown={panelHeaderDragEnabled && !panelMaximized ? onPanelHeaderPointerDown : undefined}
+              onPointerMove={panelHeaderDragEnabled && !panelMaximized ? onPanelHeaderPointerMove : undefined}
+              onPointerUp={panelHeaderDragEnabled && !panelMaximized ? finishPanelHeaderPointer : undefined}
+              onPointerCancel={panelHeaderDragEnabled && !panelMaximized ? finishPanelHeaderPointer : undefined}
+            >
               <div className="ew-flex ew-items-center ew-gap-2 ew-min-w-0">
                 <span className="ew-flex ew-shrink-0 ew-items-center ew-justify-center ew-text-white" aria-hidden>
                   <AssistantGlyph className="ew-h-[26px] ew-w-[26px]" />
@@ -893,7 +1045,7 @@ export default function ChatWidget({ config: userConfig }) {
                   <div
                     className={`ew-max-w-[90%] ew-rounded-2xl ew-px-2.5 ew-py-1.5 ew-text-[13px] ew-leading-snug ${
                       row.role === 'user'
-                        ? 'ew-whitespace-pre-wrap ew-border ew-border-embed-accent/20 ew-bg-[#e8f5e9] ew-text-[#1b2e1c] ew-shadow-sm'
+                        ? 'ew-whitespace-pre-wrap ew-border ew-border-white/10 ew-bg-[#1a1a1a] ew-text-white ew-shadow-sm [&_a]:ew-break-words [&_a]:ew-text-sky-200 [&_a]:ew-underline [&_a]:hover:ew-text-white'
                         : row.error
                           ? 'ew-whitespace-pre-wrap ew-bg-red-50 ew-text-red-900 ew-ring-1 ew-ring-red-200/80'
                           : 'ew-border ew-border-slate-200/90 ew-bg-white ew-text-[#333333] ew-shadow-[0_1px_2px_rgba(0,0,0,0.04)]'

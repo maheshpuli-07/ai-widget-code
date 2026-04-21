@@ -27,8 +27,8 @@ var __ewExecutingLoaderScript = document.currentScript;
 (function () {
   var DEFAULT_API_BASE = "https://ai-assistance-service.onrender.com";
   /** Replaced in dist by scripts/patch-dist.mjs (must match this line exactly). */
-  var CHAT_WIDGET_JS = 'chat-widget.bdf491bb86ed.js'; // ew-dist-hashed-js
-  var CHAT_WIDGET_CSS = 'chat-widget.df96a311200f.css'; // ew-dist-hashed-css
+  var CHAT_WIDGET_JS = 'chat-widget.0ad10d0e12a4.js'; // ew-dist-hashed-js
+  var CHAT_WIDGET_CSS = 'chat-widget.c2e1243c7df6.css'; // ew-dist-hashed-css
 
   function findLoaderScript() {
     var cur = __ewExecutingLoaderScript || document.currentScript;
