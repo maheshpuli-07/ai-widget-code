@@ -1,7 +1,14 @@
+/** Strip BOM / zero-width chars so pasted lines from email, Word, or mobile still match heuristics. */
+function scrubInvisible(s) {
+  return String(s)
+    .replace(/^\uFEFF+/, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '');
+}
+
 function firstLine(raw) {
   return String(raw ?? '')
     .split(/\r?\n/)
-    .map((l) => l.trim())
+    .map((l) => scrubInvisible(l.trim()))
     .find(Boolean) ?? '';
 }
 

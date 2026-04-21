@@ -27,7 +27,7 @@ var __ewExecutingLoaderScript = document.currentScript;
 (function () {
   var DEFAULT_API_BASE = "https://ai-assistance-service.onrender.com";
   /** Replaced in dist by scripts/patch-dist.mjs (must match this line exactly). */
-  var CHAT_WIDGET_JS = 'chat-widget.0ad10d0e12a4.js'; // ew-dist-hashed-js
+  var CHAT_WIDGET_JS = 'chat-widget.ba05c4a7fae0.js'; // ew-dist-hashed-js
   var CHAT_WIDGET_CSS = 'chat-widget.c2e1243c7df6.css'; // ew-dist-hashed-css
 
   function findLoaderScript() {

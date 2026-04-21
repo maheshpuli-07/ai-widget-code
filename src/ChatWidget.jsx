@@ -641,9 +641,10 @@ export default function ChatWidget({ config: userConfig }) {
       const preEarly = extractContactPrefillFromChatLine(msg);
       setContactCardRevealed(true);
       setContactExpanded(true);
-      if (preEarly.leadName) setLeadName(preEarly.leadName);
-      if (preEarly.leadEmail) setLeadEmail(preEarly.leadEmail);
-      if (preEarly.leadPhone) setLeadPhone(preEarly.leadPhone);
+      /** One snapshot per message — avoids stale name/email/phone from an earlier hint (common prod vs local confusion). */
+      setLeadName(preEarly.leadName || '');
+      setLeadEmail(preEarly.leadEmail || '');
+      setLeadPhone(preEarly.leadPhone || '');
     }
     setLoading(true);
     let ok;
