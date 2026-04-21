@@ -14,11 +14,11 @@
 </head>
 <body>
   <p class="ok">If this deploy is correct, an Alloe-style chat pill appears (bottom-center).</p>
-  <p>The script uses a <strong>content-hashed filename</strong> (e.g. <code>/chat-widget.ba05c4a7fae0.js</code>) so caches cannot replay an old wrong body for a fixed <code>/chat-widget.js</code> URL. It is parser-inserted like production embeds.</p>
+  <p>The script uses a <strong>content-hashed filename</strong> (e.g. <code>/chat-widget.8bffd4aa99cc.js</code>) so caches cannot replay an old wrong body for a fixed <code>/chat-widget.js</code> URL. It is parser-inserted like production embeds.</p>
   <p>Paths are <strong>root-absolute</strong>. Unregister any <strong>service worker</strong> for this site if the script body is wrong.</p>
   <div id="ew-status">Loading widget script…</div>
   <p>Sending messages needs your chat API at <code>apiBaseUrl</code> (and CORS).</p>
-  <script src="/chat-widget.ba05c4a7fae0.js"></script>
+  <script src="/chat-widget.8bffd4aa99cc.js"></script>
   <script>
   (function () {
     function setStatus(html, isError) {
@@ -27,7 +27,7 @@
       el.className = isError ? 'fail' : '';
       el.innerHTML = html;
     }
-    var jsUrl = '/chat-widget.ba05c4a7fae0.js';
+    var jsUrl = '/chat-widget.8bffd4aa99cc.js';
     var api =
       typeof ChatWidgetEmbed !== 'undefined'
         ? ChatWidgetEmbed

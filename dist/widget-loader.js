@@ -14,7 +14,7 @@
  *   data-body-client-id   — JSON body clientId (optional; separate from tenant header)
  *   data-client-ip        — JSON body clientIp (optional; or window.__EW_CLIENT_IP__)
  *   data-api-key          — apiKey in header + JSON body (avoid in static HTML if secret)
- *   data-contact-lead-path — e.g. /api/v1/contact-lead (callback form; server sends email)
+ *   data-contact-lead-path — e.g. /api/v1/contact-lead (omit to use widget default; set "" to hide callback form)
  *   data-access-token     — Bearer (optional; prefer window.__EW_CHAT_ACCESS_TOKEN__)
  *   data-title          — panel header title (default Girmitian AI)
  *   data-placeholder    — message input placeholder (default Ask Girmiti AI…)
@@ -27,7 +27,7 @@ var __ewExecutingLoaderScript = document.currentScript;
 (function () {
   var DEFAULT_API_BASE = "https://ai-assistance-service.onrender.com";
   /** Replaced in dist by scripts/patch-dist.mjs (must match this line exactly). */
-  var CHAT_WIDGET_JS = 'chat-widget.ba05c4a7fae0.js'; // ew-dist-hashed-js
+  var CHAT_WIDGET_JS = 'chat-widget.8bffd4aa99cc.js'; // ew-dist-hashed-js
   var CHAT_WIDGET_CSS = 'chat-widget.c2e1243c7df6.css'; // ew-dist-hashed-css
 
   function findLoaderScript() {
@@ -121,8 +121,7 @@ var __ewExecutingLoaderScript = document.currentScript;
         tenantId: tenantIdAttr,
         title: titleAttr || 'Girmitian AI',
         placeholder: placeholderAttr || 'Ask Girmiti AI…',
-        position: 'bottom-center',
-        launcherLabel: "I'm here to help — ask me anything!",
+        position: 'bottom-right',
       };
       if (accessToken) initCfg.accessToken = accessToken;
       if (bodyClientId) initCfg.clientId = bodyClientId;

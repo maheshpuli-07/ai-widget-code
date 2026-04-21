@@ -37,7 +37,7 @@ let weCreatedMount = false;
  * @param {boolean} [config.draggableLauncher=false] - when `true`, the closed chat launcher can be dragged on the page. Default `false` keeps the fixed `position` corner/center anchor.
  * @param {boolean} [config.draggablePanel] - when `true`, the open chat panel can be dragged by its dark header (not while maximized). When omitted, defaults to the same value as `draggableLauncher`. Set `false` to keep the panel fixed even if the launcher is draggable.
  * @param {boolean} [config.rememberLauncherPosition=false] - when `true` (with `draggableLauncher`), restore/save dragged launcher coordinates in localStorage (scoped like the chat session). Default `false`: each load uses `position` (e.g. bottom-right); drag applies until reload.
- * @param {string} [config.contactLeadPath] - e.g. `/api/v1/contact-lead`; when set, the callback row (**Send** = POST `sendContactLead`) **appears and expands** only when the **user** message looks like a **name, email, or phone** in chat (prefill). **Skip** or a successful **Send** removes the row from the panel; it can appear again on a later message with a new hint.
+ * @param {string} [config.contactLeadPath=/api/v1/contact-lead] - when non-empty, the callback row (**Send** = POST `sendContactLead`) **appears and expands** only when the **user** message looks like a **name, email, or phone** in chat (prefill). Not driven by the model prompt — client-side heuristics only. Set `''` to hide the card. **Skip** or a successful **Send** removes the row; it can appear again on a later hint.
  * @param {string} [config.contactCardTitle]
  * @param {string} [config.contactCardSubtitle]
  * @param {string} [config.contactCardButtonLabel]

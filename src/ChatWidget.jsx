@@ -155,15 +155,28 @@ const defaultConfig = {
   rememberLauncherPosition: false,
   /**
    * POST path for callback / lead (relative to `apiBaseUrl`), e.g. `/api/v1/contact-lead`.
-   * Empty hides the card. Your server must email staff — the browser cannot send SMTP safely.
+   * Default matches the same route used in local `main.jsx` so embeds that omit this key still show the hint-driven form.
+   * Set to `''` to hide the card. Your server must implement the route — the browser cannot send SMTP safely.
    */
-  contactLeadPath: '',
+  contactLeadPath: '/api/v1/contact-lead',
   contactCardTitle: 'Request a callback from Girmiti',
   contactCardSubtitle:
     'Please share your name and contact details below. We will reach out to you shortly.',
   contactCardButtonLabel: 'Send',
   contactCardMaxSummaryChars: 12000,
 };
+
+/** Merge host `config` with defaults; keys explicitly set to `undefined` do not wipe defaults (embed parity with local). */
+function mergeWidgetConfig(userConfig) {
+  const u =
+    userConfig && typeof userConfig === 'object' ? userConfig : {};
+  return {
+    ...defaultConfig,
+    ...Object.fromEntries(
+      Object.entries(u).filter(([, v]) => v !== undefined),
+    ),
+  };
+}
 
 function isLikelyValidEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
@@ -240,7 +253,7 @@ function ChatPanelTail({ position }) {
 }
 
 export default function ChatWidget({ config: userConfig }) {
-  const config = { ...defaultConfig, ...userConfig };
+  const config = useMemo(() => mergeWidgetConfig(userConfig), [userConfig]);
   const {
     apiBaseUrl,
     chatPath,
@@ -287,12 +300,8 @@ export default function ChatWidget({ config: userConfig }) {
     [apiBaseUrl, chatPath, tenantId, embedKey],
   );
 
-  const mergedInit = useMemo(
-    () => ({ ...defaultConfig, ...userConfig }),
-    [userConfig],
-  );
-
   const [launcherDockPx, setLauncherDockPx] = useState(() => {
+    const mergedInit = mergeWidgetConfig(userConfig);
     if (!mergedInit.draggableLauncher) return null;
     const scope = getPersistScopeKey({
       apiBaseUrl: mergedInit.apiBaseUrl,

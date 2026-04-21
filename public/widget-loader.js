@@ -14,7 +14,7 @@
  *   data-body-client-id   — JSON body clientId (optional; separate from tenant header)
  *   data-client-ip        — JSON body clientIp (optional; or window.__EW_CLIENT_IP__)
  *   data-api-key          — apiKey in header + JSON body (avoid in static HTML if secret)
- *   data-contact-lead-path — e.g. /api/v1/contact-lead (callback form; server sends email)
+ *   data-contact-lead-path — e.g. /api/v1/contact-lead (omit to use widget default; set "" to hide callback form)
  *   data-access-token     — Bearer (optional; prefer window.__EW_CHAT_ACCESS_TOKEN__)
  *   data-title          — panel header title (default Girmitian AI)
  *   data-placeholder    — message input placeholder (default Ask Girmiti AI…)
@@ -121,8 +121,7 @@ var __ewExecutingLoaderScript = document.currentScript;
         tenantId: tenantIdAttr,
         title: titleAttr || 'Girmitian AI',
         placeholder: placeholderAttr || 'Ask Girmiti AI…',
-        position: 'bottom-center',
-        launcherLabel: "I'm here to help — ask me anything!",
+        position: 'bottom-right',
       };
       if (accessToken) initCfg.accessToken = accessToken;
       if (bodyClientId) initCfg.clientId = bodyClientId;
